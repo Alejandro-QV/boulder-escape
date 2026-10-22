@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>T2 - Boulder Escape (Selva Profunda)</title>
-<style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>T2 - Boulder Escape (Selva Profunda)</title>
+  <style>
   body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; background: #122114; }
   #info-panel {
     position: absolute; top: 15px; left: 15px; color: #fff; background: rgba(0,0,0,.75);
@@ -26,8 +26,8 @@
     border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
   }
   #game-over button:hover { background: #44bd32; }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  </style>
+  <script src="libs/three.min.js"></script>
 </head>
 <body>
 
@@ -42,6 +42,8 @@
   <p id="final-stats"></p>
   <button id="restart-btn">Jugar de Nuevo</button>
 </div>
+
+  
 
 <script>
 // ---------------------------------------------------------------
@@ -468,10 +470,21 @@ function createStoneTexture() {
   }
   return new THREE.CanvasTexture(c);
 }
-const boulder = new THREE.Mesh(
-  new THREE.SphereGeometry(1.8, 32, 32),
-  new THREE.MeshStandardMaterial({ map: createStoneTexture(), roughness: 0.75 })
-);
+// Textura de piedra cargada desde archivo con TextureLoader (con respaldo procedural)
+const boulderMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.75 });
+function applyBoulderTexture(tex) {
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  boulderMat.map = tex;
+  boulderMat.bumpMap = tex;
+  boulderMat.bumpScale = 2;
+  boulderMat.color.set(0xffffff);
+  boulderMat.needsUpdate = true;
+}
+new THREE.TextureLoader().load('textures/stone.jpg', applyBoulderTexture, undefined, () => {
+  console.warn('No se pudo cargar textures/stone.jpg (¿abriste el HTML sin servidor local?). Usando textura procedural.');
+  applyBoulderTexture(createStoneTexture());
+});
+const boulder = new THREE.Mesh(new THREE.SphereGeometry(1.8, 32, 32), boulderMat);
 boulder.castShadow = true;
 scene.add(boulder);
 
