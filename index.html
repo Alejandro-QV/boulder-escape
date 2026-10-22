@@ -32,6 +32,34 @@
     #info-panel p {
       margin: 3px 0;
     }
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ffffff;
+      background: rgba(20, 0, 0, 0.9);
+      padding: 30px 50px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 24px;
+      display: none;
+      box-shadow: 0 0 20px rgba(255,0,0,0.5);
+      z-index: 200;
+    }
+    #game-over button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffcc00;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #game-over button:hover {
+      background-color: #ffd633;
+    }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -41,6 +69,12 @@
     <h2>🎮 Boulder Escape (T2)</h2>
     <p><b>Controles:</b> Teclas <b>A / D</b> o <b>FLECHA IZQ / DER</b></p>
     <p><b>Estado:</b> Corriendo activamente en la selva</p>
+  </div>
+
+  <div id="game-over">
+    <h1 style="margin:0 0 10px 0; color:#ff3333;">¡GAME OVER!</h1>
+    <p>Te has estrellado contra un obstáculo.</p>
+    <button onclick="location.reload()">Jugar de Nuevo</button>
   </div>
   
   <script>
@@ -193,7 +227,7 @@
       obstacles.push(obstacle);
     }
 
-    for (let z = -10; z > -60; z -= 10) {
+    for (let z = -35; z > -95; z -= 12) {
       createObstacle(z);
     }
 
@@ -212,8 +246,10 @@
     });
 
     const speed = 0.25;
+    let isGameOver = false;
 
     function animate() {
+      if (isGameOver) return;
       requestAnimationFrame(animate);
 
       if (keys.left && playerGroup.position.x > -maxBound) playerGroup.position.x -= moveSpeed;
@@ -226,8 +262,19 @@
       for (let i = 0; i < obstacles.length; i++) {
         const obs = obstacles[i];
         obs.position.z += speed;
+
+        const dx = playerGroup.position.x - obs.position.x;
+        const dz = playerGroup.position.z - obs.position.z;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+
+        if (distance < 0.7) {
+          isGameOver = true;
+          document.getElementById('game-over').style.display = 'block';
+          return;
+        }
+
         if (obs.position.z > 8) {
-          obs.position.z = -50 - (Math.random() * 10);
+          obs.position.z = -70 - (Math.random() * 15);
           obs.position.x = (Math.random() * 2 - 1) * maxBound;
         }
       }
