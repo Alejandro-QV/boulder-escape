@@ -42,14 +42,15 @@
     <p><b>Controles:</b> Teclas <b>A / D</b> o <b>FLECHA IZQ / DER</b></p>
     <p><b>Estado:</b> Corriendo activamente</p>
   </div>
+  
   <script>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a0f00);
     scene.fog = new THREE.FogExp2(0x1a0f00, 0.025);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 6);
-    camera.lookAt(0, 1, -10);
+    camera.position.set(0, 8.5, 7.5); 
+    camera.lookAt(0, 0, -6);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -72,6 +73,7 @@
     road.position.z = -30;
     road.receiveShadow = true;
     scene.add(road);
+
     const playerGroup = new THREE.Group();
 
     const body = new THREE.Mesh(
@@ -92,6 +94,7 @@
 
     playerGroup.position.set(0, 0, 0);
     scene.add(playerGroup);
+
     function createCanvasStoneTexture() {
       const canvas = document.createElement('canvas');
       canvas.width = 512;
@@ -117,13 +120,13 @@
     rockTexture.wrapS = THREE.RepeatWrapping;
     rockTexture.wrapT = THREE.RepeatWrapping;
 
-    const boulder = new THREE.Mesh(
-      new THREE.SphereGeometry(2.5, 32, 32),
-      new THREE.MeshStandardMaterial({ map: rockTexture, roughness: 0.8 })
-    );
-    boulder.position.set(0, 2.5, -15);
+    const rockGeo = new THREE.SphereGeometry(1.8, 32, 32);
+    const rockMat = new THREE.MeshStandardMaterial({ map: rockTexture, roughness: 0.8 });
+    const boulder = new THREE.Mesh(rockGeo, rockMat);
+    boulder.position.set(0, 1.8, 4.0);
     boulder.castShadow = true;
     scene.add(boulder);
+
     const obstacles = [];
     const obstacleGeo = new THREE.ConeGeometry(0.5, 1.2, 8);
     const obstacleMat = new THREE.MeshStandardMaterial({ color: 0xcc3300, roughness: 0.5 });
@@ -140,6 +143,7 @@
     for (let z = -10; z > -60; z -= 10) {
       createObstacle(z);
     }
+
     const keys = { left: false, right: false };
     const moveSpeed = 0.15;
     const maxBound = (ROAD_WIDTH / 2) - 0.6;
@@ -162,9 +166,9 @@
       if (keys.left && playerGroup.position.x > -maxBound) playerGroup.position.x -= moveSpeed;
       if (keys.right && playerGroup.position.x < maxBound) playerGroup.position.x += moveSpeed;
 
-      boulder.rotation.x -= 0.08; 
-      boulder.position.z += 0.08;
-      boulder.position.x += (playerGroup.position.x - boulder.position.x) * 0.03;
+      boulder.rotation.x += 0.05; 
+      boulder.position.z = playerGroup.position.z + 4.0; 
+      boulder.position.x += (playerGroup.position.x - boulder.position.x) * 0.1;
 
       for (let i = 0; i < obstacles.length; i++) {
         const obs = obstacles[i];
@@ -186,6 +190,7 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+
     animate();
   </script>
 </body>
