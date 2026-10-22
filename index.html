@@ -3,31 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>T2 - Boulder Escape (Three.js)</title>
+  <title>T2 - Boulder Escape (Selva Profunda)</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
-      background-color: #0b1a09;
+      background-color: #122114;
     }
     #info-panel {
       position: absolute;
       top: 15px;
       left: 15px;
       color: #ffffff;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 12px 20px;
-      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 14px 22px;
+      border-radius: 10px;
       font-size: 14px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
       user-select: none;
       z-index: 100;
+      border-left: 4px solid #4cd137;
     }
     #info-panel h2 {
-      margin: 0 0 5px 0;
+      margin: 0 0 6px 0;
       font-size: 18px;
-      color: #ffcc00;
+      color: #4cd137;
     }
     #info-panel p {
       margin: 3px 0;
@@ -38,27 +39,38 @@
       left: 50%;
       transform: translate(-50%, -50%);
       color: #ffffff;
-      background: rgba(20, 0, 0, 0.9);
-      padding: 30px 50px;
-      border-radius: 12px;
+      background: rgba(15, 25, 15, 0.95);
+      padding: 35px 55px;
+      border-radius: 14px;
       text-align: center;
-      font-size: 24px;
+      font-size: 22px;
       display: none;
-      box-shadow: 0 0 20px rgba(255,0,0,0.5);
+      box-shadow: 0 0 30px rgba(76, 209, 55, 0.4);
       z-index: 200;
+      border: 2px solid #4cd137;
+    }
+    #game-over h1 {
+      margin: 0 0 10px 0;
+      color: #ff4d4d;
+      font-size: 28px;
+    }
+    #game-over p {
+      margin: 8px 0;
     }
     #game-over button {
-      margin-top: 15px;
-      padding: 10px 20px;
+      margin-top: 20px;
+      padding: 12px 24px;
       font-size: 16px;
-      background-color: #ffcc00;
+      background-color: #4cd137;
+      color: #122114;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      transition: background 0.2s;
     }
     #game-over button:hover {
-      background-color: #ffd633;
+      background-color: #44bd32;
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -66,21 +78,21 @@
 <body>
 
   <div id="info-panel">
-    <h2>🎮 Boulder Escape (T2)</h2>
-    <p><b>Controles:</b> Teclas <b>A / D</b> o <b>FLECHA IZQ / DER</b></p>
-    <p><b>Estado:</b> Corriendo activamente en la selva</p>
+    <h2>🌿 Boulder Escape (Selva Profunda)</h2>
+    <p><b>Controles:</b> Movimiento <b>A / D</b> | Salto <b>ESPACIO</b></p>
+    <p id="stats-text"><b>Distancia:</b> 0 m | <b>Puntuación:</b> 0 | <b>Velocidad:</b> 1.0x</p>
   </div>
 
   <div id="game-over">
-    <h1 style="margin:0 0 10px 0; color:#ff3333;">¡GAME OVER!</h1>
-    <p>Te has estrellado contra un obstáculo.</p>
+    <h1>¡ATRAPADO POR LA ROCA!</h1>
+    <p id="final-stats">Has recorrido 0 metros.</p>
     <button onclick="location.reload()">Jugar de Nuevo</button>
   </div>
   
   <script>
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b1a09);
-    scene.fog = new THREE.FogExp2(0x0b1a09, 0.02);
+    scene.background = new THREE.Color(0x16291a);
+    scene.fog = new THREE.FogExp2(0x16291a, 0.010);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 8.5, 7.5); 
@@ -91,52 +103,251 @@
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0x2d4a22, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xccffcc, 0.6);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xd4ffcc, 0.9);
-    dirLight.position.set(5, 12, 8);
+    const dirLight = new THREE.DirectionalLight(0xfff8e7, 0.85);
+    dirLight.position.set(20, 30, 15);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
+    const sunGeo = new THREE.SphereGeometry(18, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffaaa });
+    const sun = new THREE.Mesh(sunGeo, sunMat);
+    sun.position.set(50, 70, -180);
+    scene.add(sun);
+
+    const groundGeo = new THREE.PlaneGeometry(400, 500);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x142b10, roughness: 0.98 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(0, -0.08, -120);
+    ground.receiveShadow = true;
+    scene.add(ground);
+
     const ROAD_WIDTH = 6;
-    const roadGeometry = new THREE.PlaneGeometry(ROAD_WIDTH, 120);
-    const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
-    const road = new THREE.Mesh(roadGeometry, roadMaterial);
-    road.rotation.x = -Math.PI / 2;
-    road.position.z = -30;
-    road.receiveShadow = true;
-    scene.add(road);
+    const roadSegments = [];
+    const NUM_ROAD_SEGMENTS = 6;
+    const SEGMENT_LENGTH = 70;
 
-    const trees = [];
-    
-    function createTree(xPos, zPos) {
-      const treeGroup = new THREE.Group();
-
-      const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 3, 6);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3219, roughness: 0.9 });
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 1.5;
-      trunk.castShadow = true;
-      treeGroup.add(trunk);
-
-      const leavesMat = new THREE.MeshStandardMaterial({ color: 0x14380f, roughness: 0.8 });
-      for (let i = 0; i < 3; i++) {
-        const leavesGeo = new THREE.SphereGeometry(1.2 - (i * 0.2), 8, 8);
-        const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-        leaves.position.y = 3 + (i * 0.8);
-        leaves.castShadow = true;
-        treeGroup.add(leaves);
+    function createEnhancedPathTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#26190e';
+      ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 2500; i++) {
+        const shade = Math.floor(Math.random() * 45) + 25;
+        ctx.fillStyle = Math.random() > 0.25 ? `rgb(${shade+12}, ${shade}, ${shade-12})` : '#172710';
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
       }
-
-      treeGroup.position.set(xPos, 0, zPos);
-      scene.add(treeGroup);
-      trees.push(treeGroup);
+      return new THREE.CanvasTexture(canvas);
     }
 
-    for (let z = 10; z > -80; z -= 8) {
-      createTree(-ROAD_WIDTH/2 - 2 - Math.random() * 3, z);
-      createTree(ROAD_WIDTH/2 + 2 + Math.random() * 3, z);
+    const pathTex = createEnhancedPathTexture();
+    pathTex.wrapS = THREE.RepeatWrapping;
+    pathTex.wrapT = THREE.RepeatWrapping;
+    pathTex.repeat.set(1, 4);
+
+    const roadMaterial = new THREE.MeshStandardMaterial({ map: pathTex, roughness: 0.92 });
+    const roadGeo = new THREE.PlaneGeometry(ROAD_WIDTH, SEGMENT_LENGTH);
+
+    for (let i = 0; i < NUM_ROAD_SEGMENTS; i++) {
+      const roadMesh = new THREE.Mesh(roadGeo, roadMaterial);
+      roadMesh.rotation.x = -Math.PI / 2;
+      roadMesh.position.z = -i * SEGMENT_LENGTH;
+      roadMesh.receiveShadow = true;
+      scene.add(roadMesh);
+      roadSegments.push({ mesh: roadMesh });
+    }
+
+    const backgroundScenery = [];
+
+    function createGrassPatch(xPos, zPos) {
+      const group = new THREE.Group();
+      const grassMat = new THREE.MeshStandardMaterial({ color: 0x225514, roughness: 0.8 });
+      for (let g = 0; g < 4; g++) {
+        const blade = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.8, 4), grassMat);
+        blade.position.set((g - 1.5) * 0.25, 0.4, (Math.random() - 0.5) * 0.3);
+        blade.rotation.z = (Math.random() - 0.5) * 0.4;
+        group.add(blade);
+      }
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createFlowerCluster(xPos, zPos) {
+      const group = new THREE.Group();
+      const stemMat = new THREE.MeshStandardMaterial({ color: 0x184210, roughness: 0.8 });
+      const petalColors = [0xff3366, 0xffcc00, 0x9933ff, 0xffffff];
+      
+      for (let f = 0; f < 3; f++) {
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6), stemMat);
+        stem.position.set((f - 1) * 0.3, 0.3, 0);
+        group.add(stem);
+
+        const flowerMat = new THREE.MeshStandardMaterial({ color: petalColors[Math.floor(Math.random() * petalColors.length)], roughness: 0.5 });
+        const petal = new THREE.Mesh(new THREE.SphereGeometry(0.15, 6, 6), flowerMat);
+        petal.position.set((f - 1) * 0.3, 0.6, 0);
+        group.add(petal);
+      }
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createGiantTreeWithVines(xPos, zPos) {
+      const group = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
+      const leavesMat = new THREE.MeshStandardMaterial({ color: 0x0f2b09, roughness: 0.8 });
+      const vineMat = new THREE.MeshStandardMaterial({ color: 0x1f4a14, roughness: 0.7 });
+
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 5.5, 8), trunkMat);
+      trunk.position.y = 2.75;
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      for (let i = 0; i < 5; i++) {
+        const r = 2.2 - (i * 0.35);
+        const lMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(r), leavesMat);
+        lMesh.position.y = 4.5 + (i * 0.9);
+        lMesh.castShadow = true;
+        group.add(lMesh);
+      }
+
+      for (let v = 0; v < 3; v++) {
+        const vine = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.5 + Math.random() * 1.5), vineMat);
+        vine.position.set((v - 1) * 0.7, 4.0, (v % 2 === 0 ? 0.6 : -0.6));
+        vine.castShadow = true;
+        group.add(vine);
+      }
+
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createDenseBushCluster(xPos, zPos) {
+      const group = new THREE.Group();
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x184210, roughness: 0.8 });
+      for (let b = 0; b < 3; b++) {
+        const bush = new THREE.Mesh(new THREE.DodecahedronGeometry(0.8 + Math.random() * 0.5), bMat);
+        bush.position.set((b - 1) * 0.7, 0.5 + Math.random() * 0.3, (Math.random() - 0.5) * 0.6);
+        bush.castShadow = true;
+        group.add(bush);
+      }
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createForestRock(xPos, zPos) {
+      const group = new THREE.Group();
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x5a635d, roughness: 0.85 });
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.6 + Math.random() * 1.2), rockMat);
+      rock.position.y = 0.9;
+      rock.scale.set(1.5, 0.8, 1.3);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = true;
+      group.add(rock);
+
+      const mossMat = new THREE.MeshStandardMaterial({ color: 0x184210, roughness: 0.8 });
+      const moss = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4), mossMat);
+      moss.position.set(0.2, 1.1, 0);
+      group.add(moss);
+
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createSideFallenLog(xPos, zPos) {
+      const group = new THREE.Group();
+      const logMat = new THREE.MeshStandardMaterial({ color: 0x301d11, roughness: 0.95 });
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, 4.0, 7), logMat);
+      log.rotation.z = Math.PI / 2;
+      log.rotation.y = Math.random() * Math.PI;
+      log.position.y = 0.3;
+      log.castShadow = true;
+      group.add(log);
+
+      const mossMat = new THREE.MeshStandardMaterial({ color: 0x184210, roughness: 0.8 });
+      const moss = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3), mossMat);
+      moss.position.set(0, 0.45, 0);
+      group.add(moss);
+
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createAncientRuins(xPos, zPos) {
+      const group = new THREE.Group();
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x4a4f4a, roughness: 0.9 });
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.5, 1.2), stoneMat);
+      pillar.position.y = 1.25;
+      pillar.castShadow = true;
+      group.add(pillar);
+
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    function createJungleLake(xPos, zPos) {
+      const group = new THREE.Group();
+      const waterMat = new THREE.MeshStandardMaterial({ color: 0x154c6d, roughness: 0.1, transparent: true, opacity: 0.9 });
+      const shoreMat = new THREE.MeshStandardMaterial({ color: 0x2e1e10, roughness: 0.9 });
+
+      const shore = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 7.0, 0.2, 16), shoreMat);
+      shore.position.y = 0.03;
+      shore.scale.set(1, 0.5, 1.6);
+      group.add(shore);
+
+      const water = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 5.8, 0.25, 16), waterMat);
+      water.position.y = 0.08;
+      water.scale.set(1, 0.5, 1.5);
+      group.add(water);
+
+      group.position.set(xPos, 0, zPos);
+      scene.add(group);
+      backgroundScenery.push({ group, z: zPos });
+    }
+
+    for (let z = 15; z > -320; z -= 3.0) {
+      const strictLimit = 5.5;
+      const sideLeft1 = -strictLimit - 1.5 - Math.random() * 3.5;
+      const sideLeft2 = -strictLimit - 6.5 - Math.random() * 6.0;
+      const sideRight1 = strictLimit + 1.5 + Math.random() * 3.5;
+      const sideRight2 = strictLimit + 6.5 + Math.random() * 6.0;
+
+      const randL = Math.random();
+      if (randL < 0.38) createGiantTreeWithVines(sideLeft1, z);
+      else if (randL < 0.65) createDenseBushCluster(sideLeft1, z);
+      else if (randL < 0.74) createForestRock(sideLeft1, z);
+      else if (randL < 0.85) createSideFallenLog(sideLeft1, z);
+      else if (randL < 0.94) createAncientRuins(sideLeft1, z);
+      else createGrassPatch(sideLeft1, z);
+
+      if (Math.random() < 0.30) createForestRock(sideLeft2, z - 1.2);
+      if (Math.random() < 0.55) createGiantTreeWithVines(sideLeft2, z - 1.2);
+
+      const randR = Math.random();
+      if (randR < 0.38) createGiantTreeWithVines(sideRight1, z + 1);
+      else if (randR < 0.65) createDenseBushCluster(sideRight1, z + 1);
+      else if (randR < 0.74) createForestRock(sideRight1, z + 1);
+      else if (randR < 0.85) createSideFallenLog(sideRight1, z + 1);
+      else if (randR < 0.94) createAncientRuins(sideRight1, z + 1);
+      else createGrassPatch(sideRight1, z + 1);
+
+      if (Math.random() < 0.30) createForestRock(sideRight2, z - 1);
+      if (Math.random() < 0.55) createGiantTreeWithVines(sideRight2, z - 1);
+
+      if (Math.random() < 0.12) {
+        createJungleLake(Math.random() > 0.5 ? -32 : 32, z);
+      }
     }
 
     const playerGroup = new THREE.Group();
@@ -189,12 +400,11 @@
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#6e6e6e';
       ctx.fillRect(0, 0, 512, 512);
-
-      for (let i = 0; i < 3000; i++) {
+      for (let i = 0; i < 3500; i++) {
         const x = Math.random() * 512;
         const y = Math.random() * 512;
-        const radius = Math.random() * 3 + 1;
-        const shade = Math.floor(Math.random() * 100) + 50;
+        const radius = Math.random() * 3.5 + 1;
+        const shade = Math.floor(Math.random() * 110) + 40;
         ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -208,36 +418,181 @@
     rockTexture.wrapT = THREE.RepeatWrapping;
 
     const rockGeo = new THREE.SphereGeometry(1.8, 32, 32);
-    const rockMat = new THREE.MeshStandardMaterial({ map: rockTexture, roughness: 0.8 });
+    const rockMat = new THREE.MeshStandardMaterial({ map: rockTexture, roughness: 0.75 });
     const boulder = new THREE.Mesh(rockGeo, rockMat);
     boulder.position.set(0, 1.8, 4.0);
     boulder.castShadow = true;
     scene.add(boulder);
 
     const obstacles = [];
-    const obstacleGeo = new THREE.ConeGeometry(0.5, 1.2, 8);
-    const obstacleMat = new THREE.MeshStandardMaterial({ color: 0xcc3300, roughness: 0.5 });
+    const flames = [];
+    const sparks = [];
+    let lastObstacleLane = 1;
 
-    function createObstacle(zPos) {
-      const obstacle = new THREE.Mesh(obstacleGeo, obstacleMat);
-      const maxX = (ROAD_WIDTH / 2) - 0.8;
-      obstacle.position.set((Math.random() * 2 - 1) * maxX, 0.6, zPos);
-      obstacle.castShadow = true;
-      scene.add(obstacle);
-      obstacles.push(obstacle);
+    function canSpawnAt(zPos) {
+      for (let i = 0; i < obstacles.length; i++) {
+        if (Math.abs(obstacles[i].position.z - zPos) < 11.0) {
+          return false;
+        }
+      }
+      return true;
     }
 
-    for (let z = -35; z > -95; z -= 12) {
+    function createObstacle(zPos) {
+      if (!canSpawnAt(zPos)) return;
+
+      const obstacleGroup = new THREE.Group();
+      const rand = Math.random();
+
+      if (rand < 0.16) {
+        const fireGroup = new THREE.Group();
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 });
+        
+        for (let lX = -2.2; lX <= 2.2; lX += 1.4) {
+          const baseLog = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.4, 6), baseMat);
+          baseLog.rotation.x = Math.PI / 2;
+          baseLog.position.set(lX, 0.15, 0);
+          fireGroup.add(baseLog);
+        }
+
+        for (let fX = -2.0; fX <= 2.0; fX += 0.8) {
+          const flameMat = new THREE.MeshStandardMaterial({ color: 0xff5500, emissive: 0xff2200, roughness: 0.2, transparent: true, opacity: 0.9 });
+          const flameMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55), flameMat);
+          flameMesh.position.set(fX, 0.6, 0);
+          flameMesh.castShadow = true;
+          fireGroup.add(flameMesh);
+          flames.push(flameMesh);
+        }
+
+        const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        for (let s = 0; s < 6; s++) {
+          const spark = new THREE.Mesh(new THREE.SphereGeometry(0.06, 4, 4), sparkMat);
+          spark.position.set((Math.random() - 0.5) * 4.5, 0.5 + Math.random() * 0.6, (Math.random() - 0.5) * 0.4);
+          fireGroup.add(spark);
+          sparks.push({ mesh: spark, baseY: spark.position.y, offset: Math.random() * Math.PI });
+        }
+
+        fireGroup.position.set(0, 0, zPos);
+        scene.add(fireGroup);
+        obstacles.push(fireGroup);
+        fireGroup.userData = { type: 'wideFire', height: 1.1, depthSize: 1.2, widthSize: 4.8 };
+        return;
+      }
+
+      let laneIndex = Math.floor(Math.random() * 3);
+      if (laneIndex === lastObstacleLane) {
+        laneIndex = (laneIndex + 1) % 3;
+      }
+      lastObstacleLane = laneIndex;
+      const laneX = (laneIndex - 1) * 2.0;
+
+      const subRand = Math.random();
+
+      if (subRand < 0.25) {
+        const logGroup = new THREE.Group();
+        const logMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 });
+        const log = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.45, 2.0, 7), logMat);
+        log.rotation.z = Math.PI / 2;
+        log.position.y = 0.4;
+        log.castShadow = true;
+        logGroup.add(log);
+
+        const mossMat = new THREE.MeshStandardMaterial({ color: 0x184210, roughness: 0.8 });
+        for (let m = 0; m < 2; m++) {
+          const mossPatch = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2), mossMat);
+          mossPatch.position.set((m - 0.5) * 0.6, 0.52, 0);
+          logGroup.add(mossPatch);
+        }
+        obstacleGroup.add(logGroup);
+        obstacleGroup.userData = { type: 'low', height: 0.8, depthSize: 1.0 };
+
+      } else if (subRand < 0.50) {
+        const mushroomMat = new THREE.MeshStandardMaterial({ color: 0xb5332f, roughness: 0.5 });
+        const stemMat = new THREE.MeshStandardMaterial({ color: 0xdedede, roughness: 0.7 });
+        
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.7, 6), stemMat);
+        stem.position.y = 0.35;
+        stem.castShadow = true;
+        obstacleGroup.add(stem);
+
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), mushroomMat);
+        cap.position.y = 0.7;
+        cap.scale.set(1, 0.5, 1);
+        cap.castShadow = true;
+        obstacleGroup.add(cap);
+        
+        obstacleGroup.userData = { type: 'low', height: 0.9, depthSize: 1.0 };
+
+      } else if (subRand < 0.75) {
+        const rootGroup = new THREE.Group();
+        const rootMat = new THREE.MeshStandardMaterial({ color: 0x7c4721, roughness: 0.7 });
+        const mossHighlightMat = new THREE.MeshStandardMaterial({ color: 0x44bb33, roughness: 0.5 });
+        
+        for (let r = 0; r < 2; r++) {
+          const root = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.22, 1.8, 6), rootMat);
+          root.rotation.z = Math.PI / 2;
+          root.position.set((r - 0.5) * 0.4, 0.25, 0);
+          root.castShadow = true;
+          rootGroup.add(root);
+
+          const highlight = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 6), mossHighlightMat);
+          highlight.position.set((r - 0.5) * 0.4, 0.35, 0);
+          rootGroup.add(highlight);
+        }
+        obstacleGroup.add(rootGroup);
+        obstacleGroup.userData = { type: 'low', height: 0.6, depthSize: 1.0 };
+
+      } else {
+        const multiSpikeGroup = new THREE.Group();
+        const spikeMat = new THREE.MeshStandardMaterial({ color: 0x6e7d77, roughness: 0.5 });
+        const tipMat = new THREE.MeshStandardMaterial({ color: 0xc4ffb0, roughness: 0.3, emissive: 0x113311 });
+
+        for (let p = -1; p <= 1; p++) {
+          const spike = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.4 + Math.abs(p) * 0.2, 6), spikeMat);
+          spike.position.set(p * 0.35, 0.7, (p === 0 ? 0.05 : -0.05));
+          spike.rotation.z = p * 0.15;
+          spike.castShadow = true;
+          multiSpikeGroup.add(spike);
+
+          const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 5), tipMat);
+          tip.position.set(p * 0.35, 1.4, (p === 0 ? 0.05 : -0.05));
+          multiSpikeGroup.add(tip);
+        }
+
+        const baseRock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5), spikeMat);
+        baseRock.position.y = 0.25;
+        multiSpikeGroup.add(baseRock);
+
+        obstacleGroup.add(multiSpikeGroup);
+        obstacleGroup.userData = { type: 'low', height: 1.5, depthSize: 1.0 };
+      }
+
+      obstacleGroup.position.set(laneX, 0, zPos);
+      scene.add(obstacleGroup);
+      obstacles.push(obstacleGroup);
+    }
+
+    for (let z = -25; z > -250; z -= 11) {
       createObstacle(z);
     }
 
-    const keys = { left: false, right: false };
-    const moveSpeed = 0.15;
+    const keys = { left: false, right: false, space: false };
+    const moveSpeed = 0.16;
     const maxBound = (ROAD_WIDTH / 2) - 0.6;
+
+    let playerY = 0;
+    let verticalVelocity = 0;
+    const gravity = 0.016;
+    const jumpForce = 0.29;
+    let isJumping = false;
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.left = true;
       if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = true;
+      if (e.code === 'Space' && !isJumping) {
+        verticalVelocity = jumpForce;
+        isJumping = true;
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -245,58 +600,132 @@
       if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.right = false;
     });
 
-    const speed = 0.25;
+    let currentSpeed = 0.24;
+    let distanceTraveled = 0;
+    let score = 0;
     let isGameOver = false;
 
     function animate() {
       if (isGameOver) return;
       requestAnimationFrame(animate);
 
+      currentSpeed = 0.24 + Math.min(distanceTraveled * 0.00015, 0.45);
+      distanceTraveled += currentSpeed * 0.5;
+      score = Math.floor(distanceTraveled * 10);
+
+      const multiplier = (currentSpeed / 0.24).toFixed(1);
+      document.getElementById('stats-text').innerHTML = `<b>Distancia:</b> ${Math.floor(distanceTraveled)} m | <b>Puntuación:</b> ${score} | <b>Velocidad:</b> ${multiplier}x`;
+
       if (keys.left && playerGroup.position.x > -maxBound) playerGroup.position.x -= moveSpeed;
       if (keys.right && playerGroup.position.x < maxBound) playerGroup.position.x += moveSpeed;
 
-      boulder.rotation.x += 0.05; 
+      if (isJumping) {
+        playerY += verticalVelocity;
+        verticalVelocity -= gravity;
+        if (playerY <= 0) {
+          playerY = 0;
+          isJumping = false;
+          verticalVelocity = 0;
+        }
+      }
+
+      playerGroup.position.y = playerY;
+
+      boulder.rotation.x += 0.06; 
       boulder.position.z = playerGroup.position.z + 4.0; 
       boulder.position.x += (playerGroup.position.x - boulder.position.x) * 0.1;
 
+      const timeNow = Date.now() * 0.01;
+      for (let j = 0; j < flames.length; j++) {
+        const f = flames[j];
+        f.scale.set(
+          1 + Math.sin(timeNow + j) * 0.2,
+          1 + Math.cos(timeNow * 1.5 + j) * 0.3,
+          1 + Math.sin(timeNow + j) * 0.2
+        );
+      }
+
+      for (let s = 0; s < sparks.length; s++) {
+        const sp = sparks[s];
+        sp.mesh.position.y = sp.baseY + Math.sin(timeNow * 3 + sp.offset) * 0.3;
+        sp.mesh.position.x += Math.cos(timeNow + sp.offset) * 0.01;
+      }
+
+      for (let i = 0; i < roadSegments.length; i++) {
+        const seg = roadSegments[i];
+        seg.mesh.position.z += currentSpeed;
+        if (seg.mesh.position.z > SEGMENT_LENGTH / 2) {
+          seg.mesh.position.z -= NUM_ROAD_SEGMENTS * SEGMENT_LENGTH;
+        }
+      }
+
       for (let i = 0; i < obstacles.length; i++) {
         const obs = obstacles[i];
-        obs.position.z += speed;
+        obs.position.z += currentSpeed;
 
         const dx = playerGroup.position.x - obs.position.x;
         const dz = playerGroup.position.z - obs.position.z;
-        const distance = Math.sqrt(dx * dx + dz * dz);
 
-        if (distance < 0.7) {
-          isGameOver = true;
-          document.getElementById('game-over').style.display = 'block';
-          return;
+        if (obs.userData.type === 'wideFire') {
+          const depth = obs.userData.depthSize || 1.2;
+          const halfWidth = (obs.userData.widthSize || 4.8) / 2;
+          if (Math.abs(dz) < depth && Math.abs(dx) < halfWidth) {
+            if (playerY < obs.userData.height) {
+              triggerGameOver();
+              return;
+            }
+          }
+        } else {
+          const depth = obs.userData.depthSize || 1.0;
+          if (Math.abs(dz) < depth && Math.abs(dx) < 0.7) {
+            if (obs.userData.type === 'low' && playerY < obs.userData.height) {
+              triggerGameOver();
+              return;
+            }
+            if (obs.userData.type === 'high') {
+              triggerGameOver();
+              return;
+            }
+          }
         }
 
         if (obs.position.z > 8) {
-          obs.position.z = -70 - (Math.random() * 15);
-          obs.position.x = (Math.random() * 2 - 1) * maxBound;
+          obs.position.z = -180 - (Math.random() * 50);
+          let laneIndex = Math.floor(Math.random() * 3);
+          if (laneIndex === lastObstacleLane) {
+            laneIndex = (laneIndex + 1) % 3;
+          }
+          lastObstacleLane = laneIndex;
+          if (obs.userData.type !== 'wideFire') {
+            obs.position.x = (laneIndex - 1) * 2.0;
+          }
         }
       }
 
-      for (let i = 0; i < trees.length; i++) {
-        const t = trees[i];
-        t.position.z += speed;
-        if (t.position.z > 10) {
-          t.position.z = -80;
+      for (let i = 0; i < backgroundScenery.length; i++) {
+        const sc = backgroundScenery[i].group;
+        sc.position.z += currentSpeed;
+        if (sc.position.z > 12) {
+          sc.position.z = -280;
         }
       }
 
-      const time = Date.now() * 0.015;
-      playerGroup.position.y = Math.abs(Math.sin(time)) * 0.1;
-      legLeft.position.z = Math.sin(time) * 0.3;
-      legRight.position.z = -Math.sin(time) * 0.3;
-      armLeft.position.z = -Math.sin(time) * 0.3;
-      armRight.position.z = Math.sin(time) * 0.3;
+      if (!isJumping) {
+        const time = Date.now() * 0.018;
+        legLeft.position.z = Math.sin(time) * 0.35;
+        legRight.position.z = -Math.sin(time) * 0.35;
+        armLeft.position.z = -Math.sin(time) * 0.35;
+        armRight.position.z = -Math.sin(time) * 0.35;
+      }
 
       camera.position.x = playerGroup.position.x * 0.3;
-
       renderer.render(scene, camera);
+    }
+
+    function triggerGameOver() {
+      isGameOver = true;
+      document.getElementById('final-stats').innerHTML = `Has recorrido <b>${Math.floor(distanceTraveled)} metros</b>.<br>Puntuación final: <b>${score} puntos</b>.`;
+      document.getElementById('game-over').style.display = 'block';
     }
 
     window.addEventListener('resize', () => {
