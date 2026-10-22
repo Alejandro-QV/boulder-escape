@@ -48,8 +48,8 @@
     scene.fog = new THREE.FogExp2(0x1a0f00, 0.025);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 7);
-    camera.lookAt(0, 1, -2);
+    camera.position.set(0, 3, 6);
+    camera.lookAt(0, 1, -10);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -90,7 +90,7 @@
     head.castShadow = true;
     playerGroup.add(head);
 
-    playerGroup.position.set(0, 0, 3);
+    playerGroup.position.set(0, 0, 0);
     scene.add(playerGroup);
     function createCanvasStoneTexture() {
       const canvas = document.createElement('canvas');
@@ -121,7 +121,7 @@
       new THREE.SphereGeometry(2.5, 32, 32),
       new THREE.MeshStandardMaterial({ map: rockTexture, roughness: 0.8 })
     );
-    boulder.position.set(0, 2.5, -3);
+    boulder.position.set(0, 2.5, -15);
     boulder.castShadow = true;
     scene.add(boulder);
     const obstacles = [];
@@ -162,8 +162,9 @@
       if (keys.left && playerGroup.position.x > -maxBound) playerGroup.position.x -= moveSpeed;
       if (keys.right && playerGroup.position.x < maxBound) playerGroup.position.x += moveSpeed;
 
-      boulder.rotation.x += 0.08;
-      boulder.position.x += (playerGroup.position.x - boulder.position.x) * 0.05;
+      boulder.rotation.x -= 0.08; 
+      boulder.position.z += 0.08;
+      boulder.position.x += (playerGroup.position.x - boulder.position.x) * 0.03;
 
       for (let i = 0; i < obstacles.length; i++) {
         const obs = obstacles[i];
