@@ -9,7 +9,7 @@
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
-      background-color: #000;
+      background-color: #0b1a09;
     }
     #info-panel {
       position: absolute;
@@ -40,13 +40,13 @@
   <div id="info-panel">
     <h2>🎮 Boulder Escape (T2)</h2>
     <p><b>Controles:</b> Teclas <b>A / D</b> o <b>FLECHA IZQ / DER</b></p>
-    <p><b>Estado:</b> Corriendo activamente</p>
+    <p><b>Estado:</b> Corriendo activamente en la selva</p>
   </div>
   
   <script>
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a0f00);
-    scene.fog = new THREE.FogExp2(0x1a0f00, 0.025);
+    scene.background = new THREE.Color(0x0b1a09);
+    scene.fog = new THREE.FogExp2(0x0b1a09, 0.02);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 8.5, 7.5); 
@@ -57,40 +57,93 @@
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0x2d4a22, 0.8);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffea9f, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xd4ffcc, 0.9);
     dirLight.position.set(5, 12, 8);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
     const ROAD_WIDTH = 6;
-    const roadGeometry = new THREE.PlaneGeometry(ROAD_WIDTH, 100);
-    const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+    const roadGeometry = new THREE.PlaneGeometry(ROAD_WIDTH, 120);
+    const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2817, roughness: 0.9 });
     const road = new THREE.Mesh(roadGeometry, roadMaterial);
     road.rotation.x = -Math.PI / 2;
     road.position.z = -30;
     road.receiveShadow = true;
     scene.add(road);
 
+    const trees = [];
+    
+    function createTree(xPos, zPos) {
+      const treeGroup = new THREE.Group();
+
+      const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 3, 6);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3219, roughness: 0.9 });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 1.5;
+      trunk.castShadow = true;
+      treeGroup.add(trunk);
+
+      const leavesMat = new THREE.MeshStandardMaterial({ color: 0x14380f, roughness: 0.8 });
+      for (let i = 0; i < 3; i++) {
+        const leavesGeo = new THREE.SphereGeometry(1.2 - (i * 0.2), 8, 8);
+        const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+        leaves.position.y = 3 + (i * 0.8);
+        leaves.castShadow = true;
+        treeGroup.add(leaves);
+      }
+
+      treeGroup.position.set(xPos, 0, zPos);
+      scene.add(treeGroup);
+      trees.push(treeGroup);
+    }
+
+    for (let z = 10; z > -80; z -= 8) {
+      createTree(-ROAD_WIDTH/2 - 2 - Math.random() * 3, z);
+      createTree(ROAD_WIDTH/2 + 2 + Math.random() * 3, z);
+    }
+
     const playerGroup = new THREE.Group();
 
-    const body = new THREE.Mesh(
-      new THREE.BoxGeometry(0.8, 1.2, 0.5), 
-      new THREE.MeshStandardMaterial({ color: 0x0088ff })
+    const torso = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 1.0, 0.4), 
+      new THREE.MeshStandardMaterial({ color: 0x2266ff, roughness: 0.4 })
     );
-    body.position.y = 1;
-    body.castShadow = true;
-    playerGroup.add(body);
+    torso.position.y = 1.1;
+    torso.castShadow = true;
+    playerGroup.add(torso);
 
     const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 16, 16), 
-      new THREE.MeshStandardMaterial({ color: 0xffcc99 })
+      new THREE.SphereGeometry(0.3, 16, 16), 
+      new THREE.MeshStandardMaterial({ color: 0xffd1b3, roughness: 0.6 })
     );
-    head.position.y = 1.9;
+    head.position.y = 1.8;
     head.castShadow = true;
     playerGroup.add(head);
+
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.8 });
+    const legLeft = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.3), legMat);
+    legLeft.position.set(-0.2, 0.45, 0);
+    legLeft.castShadow = true;
+    playerGroup.add(legLeft);
+
+    const legRight = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.7, 0.3), legMat);
+    legRight.position.set(0.2, 0.45, 0);
+    legRight.castShadow = true;
+    playerGroup.add(legRight);
+
+    const armMat = new THREE.MeshStandardMaterial({ color: 0xffd1b3, roughness: 0.6 });
+    const armLeft = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.25), armMat);
+    armLeft.position.set(-0.5, 1.1, 0);
+    armLeft.castShadow = true;
+    playerGroup.add(armLeft);
+
+    const armRight = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.25), armMat);
+    armRight.position.set(0.5, 1.1, 0);
+    armRight.castShadow = true;
+    playerGroup.add(armRight);
 
     playerGroup.position.set(0, 0, 0);
     scene.add(playerGroup);
@@ -179,7 +232,21 @@
         }
       }
 
-      playerGroup.position.y = Math.abs(Math.sin(Date.now() * 0.01)) * 0.15;
+      for (let i = 0; i < trees.length; i++) {
+        const t = trees[i];
+        t.position.z += speed;
+        if (t.position.z > 10) {
+          t.position.z = -80;
+        }
+      }
+
+      const time = Date.now() * 0.015;
+      playerGroup.position.y = Math.abs(Math.sin(time)) * 0.1;
+      legLeft.position.z = Math.sin(time) * 0.3;
+      legRight.position.z = -Math.sin(time) * 0.3;
+      armLeft.position.z = -Math.sin(time) * 0.3;
+      armRight.position.z = Math.sin(time) * 0.3;
+
       camera.position.x = playerGroup.position.x * 0.3;
 
       renderer.render(scene, camera);
